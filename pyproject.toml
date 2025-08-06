@@ -1,0 +1,20 @@
+[project]
+name = "Foliatti Fisico"
+dynamic = [ "version" ]
+
+readme = "README.md"
+
+requires-python = ">=3.8"
+
+authors = [
+    { name = "Seanalytics Solutions", email = "redes@seanalytics.solutions" }
+]
+
+
+dependencies = [
+    "pandas", "numpy", "scikit-learn",
+    "seaborn", "matplotlib", "gspread",
+    "google", "pycaret", "scipy",
+    "statsmodels", "jupyter", "pyodbc",
+    "sqlalchemy", "dotenv",
+]
