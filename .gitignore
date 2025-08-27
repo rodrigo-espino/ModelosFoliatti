@@ -181,3 +181,5 @@ cython_debug/
 
 data/raw!/environment.yml
 
+data/*.csv
+models/*.pkl
