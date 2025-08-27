@@ -180,6 +180,3 @@ cython_debug/
 .pypirc
 
 data/raw!/environment.yml
-
-data/*.csv
-models/*.pkl
