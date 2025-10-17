@@ -1,0 +1,34 @@
+{
+  "outlier_filtering": false,
+  "outlier_method": null,
+  "viz_filtering": false,
+  "original_samples": 259110,
+  "processed_samples": 259110,
+  "feature_names": {
+    "tiempo": [
+      "INITIAL_AMOUNT",
+      "AVG_BET",
+      "Cluster"
+    ],
+    "bet": [
+      "INITIAL_AMOUNT",
+      "AVG_BET",
+      "Cluster",
+      "tiempo_pred"
+    ],
+    "win": [
+      "INITIAL_AMOUNT",
+      "AVG_BET",
+      "Cluster",
+      "tiempo_pred",
+      "bet_pred",
+      "total_money_handled",
+      "house_edge_effect",
+      "money_multiplier",
+      "reinvestment_indicator",
+      "excess_betting",
+      "money_at_risk",
+      "cluster_risk_adjusted"
+    ]
+  }
+}

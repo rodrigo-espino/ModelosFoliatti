@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicción de Tiempo y Apuesta</title>
+     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a9aab0 0%, #7f808a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .form-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .label-with-tooltip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input:hover {
+            border-color: #c3c8d4;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 35px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #a9aab0 0%, #7f808a 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .result-container.success {
+            border-left-color: #28a745;
+            background-color: #f8fff9;
+        }
+
+        .result-container.error {
+            border-left-color: #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .result-title {
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .result-json {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .error-message {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .prediction-results {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #333;
+            padding: 25px;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .prediction-summary {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .prediction-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .highlight-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .highlight-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .highlight-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .highlight-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .highlight-description {
+            font-size: 14px;
+            color: #6c757d;
+            line-height: 1.4;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .cluster-info {
+            display: inline-block;
+            position: relative;
+            margin-left: 8px;
+            cursor: help;
+        }
+
+        .cluster-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .cluster-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: nowrap;
+            z-index: 1000;
+            transition: opacity 0.3s, visibility 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 250px;
+            text-align: left;
+        }
+
+        .cluster-tooltip-content {
+            line-height: 1.5;
+        }
+
+        .cluster-tooltip-item {
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+
+        .cluster-tooltip-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .cluster-number {
+            font-weight: bold;
+            color: #667eea;
+            display: inline-block;
+            width: 20px;
+        }
+
+        .cluster-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2c3e50 transparent transparent transparent;
+        }
+
+        .cluster-info:hover .cluster-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-info {
+            display: inline-block;
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #a9aab0 0%, #7f808a 100%);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .tooltip-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 1000;
+            transition: opacity 0.3s, visibility 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 280px;
+            text-align: left;
+        }
+
+        .tooltip-content::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2c3e50 transparent transparent transparent;
+        }
+
+        .tooltip-info:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .form-container {
+                padding: 30px 20px;
+            }
+            
+            .form-title {
+                font-size: 24px;
+            }
+
+            .tooltip-content {
+                min-width: 250px;
+                left: 0;
+                transform: translateX(-80%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1 class="form-title">Predicción de Tiempo y Apuesta</h1>
+        
+        <form id="dataForm">
+            <div class="form-group">
+                <label for="avgBet" class="form-label">AVG_BET</label>
+                <input 
+                    type="number" 
+                    id="avgBet" 
+                    name="avgBet" 
+                    class="form-input" 
+                    step="0.1" 
+                    placeholder="25.5"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <div class="label-with-tooltip">
+                    <label for="cluster" class="form-label">Cluster</label>
+                    <div class="tooltip-info">
+                        <div class="tooltip-icon">i</div>
+                        <div class="tooltip-content">
+                            <div class="cluster-tooltip-content">
+                                <strong>Tipos de Jugadores:</strong><br><br>
+                                <div class="cluster-tooltip-item">
+                                    <span class="cluster-number" style="color: #ffffff;">0:</span> Jugadores mayores, baja actividad y bajo riesgo
+                                </div>
+                                <div class="cluster-tooltip-item">
+                                    <span class="cluster-number"style="color: #ffffff;" >1:</span> Alta actividad, consistencia moderada
+                                </div>
+                                <div class="cluster-tooltip-item">
+                                    <span class="cluster-number" style="color: #ffffff;">2:</span> Jóvenes, apuestas más altas pero poca actividad
+                                </div>
+                                <div class="cluster-tooltip-item">
+                                    <span class="cluster-number" style="color: #ffffff;">3:</span> Jugadores intensivos, alto volumen y constancia
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <input 
+                    type="number" 
+                    id="cluster" 
+                    name="cluster" 
+                    class="form-input" 
+                    placeholder="1"
+                    min="0"
+                    max="3"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="initialAmount" class="form-label">INITIAL_AMOUNT</label>
+                <input 
+                    type="number" 
+                    id="initialAmount" 
+                    name="initialAmount" 
+                    class="form-input" 
+                    placeholder="500"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="initialTime" class="form-label">INITIAL_TIME</label>
+                <input 
+                    type="datetime-local" 
+                    id="initialTime" 
+                    name="initialTime" 
+                    class="form-input" 
+                    required
+                >
+            </div>
+
+            <div class="btn-container">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <div class="loading-spinner" id="loadingSpinner"></div>
+                    <span id="btnText">Hacer Predicción</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="result" class="result-container">
+            <h3 class="result-title" id="resultTitle">Resultado de la Predicción:</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('dataForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const btnText = document.getElementById('btnText');
+            const resultContainer = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+            
+            // Mostrar estado de carga
+            submitBtn.disabled = true;
+            loadingSpinner.style.display = 'inline-block';
+            btnText.textContent = 'Procesando...';
+            resultContainer.style.display = 'none';
+            
+            // Preparar los datos
+            const formData = {
+                AVG_BET: parseFloat(document.getElementById('avgBet').value),
+                Cluster: parseInt(document.getElementById('cluster').value),
+                INITIAL_AMOUNT: parseFloat(document.getElementById('initialAmount').value),
+                INITIAL_TIME: document.getElementById('initialTime').value.replace('T', ' ') + ':00'
+            };
+            
+            try {
+                // Hacer la petición POST al endpoint
+                const response = await fetch('/predict-time-bet-win', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+        function formatPredictionResults(data) {
+            // Si hay un campo predictions, usarlo; si no, usar toda la data
+            const predictions = data.predictions || data;
+            
+            // Formatear números antes de generar el resumen
+            const formattedPredictions = formatNumbers(predictions);
+            
+            return `
+                <div class="prediction-results">
+                    <div class="prediction-summary">
+                        ${generateNaturalSummary(formattedPredictions, predictions)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatNumbers(obj) {
+            const formatted = {};
+            
+            for (let [key, value] of Object.entries(obj)) {
+                if (typeof value === 'number') {
+                    // Si es un número entero grande, agregar comas
+                    if (Number.isInteger(value) && Math.abs(value) >= 1000) {
+                        formatted[key] = value.toLocaleString('en-US');
+                    }
+                    // Si es un número flotante, limitarlo a 2 decimales
+                    else if (!Number.isInteger(value)) {
+                        const rounded = Math.round(value * 100) / 100;
+                        if (Math.abs(rounded) >= 1000) {
+                            formatted[key] = rounded.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        } else {
+                            formatted[key] = rounded.toFixed(2);
+                        }
+                    } else {
+                        formatted[key] = value;
+                    }
+                } else if (typeof value === 'string') {
+                    // Buscar números en strings y formatearlos
+                    formatted[key] = value.replace(/\b(\d{4,}(?:\.\d+)?)\b/g, (match) => {
+                        const num = parseFloat(match);
+                        if (Number.isInteger(num)) {
+                            return num.toLocaleString('en-US');
+                        } else {
+                            const rounded = Math.round(num * 100) / 100;
+                            return rounded.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    });
+                } else {
+                    formatted[key] = value;
+                }
+            }
+            
+            return formatted;
+        }
+
+        function generateNaturalSummary(predictions, originalPredictions = {}) {
+            // Obtener información del cluster original para detectar el número
+            const clusterValue = getClusterValue(originalPredictions);
+            
+            // Generar un resumen completamente natural y fácil de entender
+            let summary = "";
+            
+            // Agregar información del cluster si existe
+            if (clusterValue !== null) {
+                summary += generateClusterInfo(clusterValue) + "\n\n";
+            }
+            
+            // Determinar el contexto general
+            if (hasTimeData(predictions)) {
+                summary += "🕐 **Predicción de Tiempo**\n\n";
+                summary += generateTimePredictionText(predictions);
+            } else if (hasBetData(predictions)) {
+                summary += "🎲 **Recomendación de Apuesta**\n\n";
+                summary += generateBetRecommendationText(predictions);
+            } else if (hasBusinessData(predictions)) {
+                summary += "💼 **Análisis de Juego**\n\n";
+                summary += generateBusinessAnalysisText(predictions);
+            } else {
+                // Análisis general
+                summary += generateGeneralAnalysisText(predictions);
+            }
+            
+            return summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        }
+        
+        function getClusterValue(predictions) {
+            // Buscar el valor del cluster en los datos originales
+            const clusterKeys = ['cluster', 'Cluster', 'CLUSTER'];
+            for (let key of clusterKeys) {
+                if (predictions[key] !== undefined) {
+                    return parseInt(predictions[key]);
+                }
+            }
+            return null;
+        }
+        
+        function generateClusterInfo(clusterValue) {
+            const clusterDescriptions = {
+                0: "Jugadores mayores, baja actividad y bajo riesgo",
+                1: "Alta actividad, consistencia moderada", 
+                2: "Jóvenes, apuestas más altas pero poca actividad",
+                3: "Jugadores intensivos, alto volumen y constancia"
+            };
+            
+            const description = clusterDescriptions[clusterValue];
+            if (description) {
+                return `👥 **Perfil de Jugador**: Cluster ${clusterValue} <span class="cluster-info"><span class="cluster-icon">i</span><span class="cluster-tooltip">${description}</span></span>`;
+            }
+            return `👥 **Perfil de Jugador**: Cluster ${clusterValue}`;
+        }
+        
+        function hasTimeData(predictions) {
+            const timeKeys = ['tiempo_predicho', 'predicted_time', 'time', 'duration', 'estimated_time'];
+            return timeKeys.some(key => predictions[key]);
+        }
+        
+        function hasBetData(predictions) {
+            const betKeys = ['apuesta_recomendada', 'recommended_bet', 'bet', 'amount', 'wager'];
+            return betKeys.some(key => predictions[key]);
+        }
+        
+        function hasBusinessData(predictions) {
+            const businessKeys = ['profit', 'revenue', 'sales', 'ganancia', 'ingresos', 'ventas'];
+            return businessKeys.some(key => predictions[key]);
+        }
+
+        function generateTimePredictionText(predictions) {
+            let text = "Basándome en los datos que proporcionaste, he analizado los patrones y tendencias.\n\n";
+            
+            const timeValue = getValueByKeys(predictions, ['tiempo_predicho', 'predicted_time', 'time', 'duration']);
+            const probability = getValueByKeys(predictions, ['probabilidad_ganar', 'win_probability', 'probability', 'success_rate']);
+            const confidence = getValueByKeys(predictions, ['confidence', 'confianza', 'accuracy']);
+            
+            if (timeValue) {
+                text += `⏱️ **El tiempo estimado es de ${timeValue}**\n\n`;
+            }
+            
+            if (probability) {
+                const probNum = extractNumber(probability);
+                if (probNum > 70) {
+                    text += `✅ Las probabilidades son muy favorables (${probability}). ¡Es un buen momento para proceder!\n\n`;
+                } else if (probNum > 50) {
+                    text += `⚖️ Las probabilidades son moderadas (${probability}). Considera los riesgos antes de decidir.\n\n`;
+                } else {
+                    text += `⚠️ Las probabilidades son bajas (${probability}). Te recomiendo ser cauteloso.\n\n`;
+                }
+            }
+            
+            if (confidence) {
+                const confNum = extractNumber(confidence);
+                if (confNum > 80) {
+                    text += `🎯 Tengo mucha confianza en esta predicción (${confidence}).\n`;
+                } else if (confNum > 60) {
+                    text += `📊 La confianza en esta predicción es moderada (${confidence}).\n`;
+                } else {
+                    text += `🤔 Esta predicción tiene menor certeza (${confidence}). Tómala como referencia.\n`;
+                }
+            }
+            
+            return text;
+        }
+
+        function generateBetRecommendationText(predictions) {
+            let text = "He analizado tu situación financiera y las condiciones del juego.\n\n";
+            
+            const betValue = getValueByKeys(predictions, ['apuesta_recomendada', 'recommended_bet', 'bet', 'amount']);
+            const winChance = getValueByKeys(predictions, ['probabilidad_ganar', 'win_probability', 'success_rate']);
+            const risk = getValueByKeys(predictions, ['riesgo', 'risk', 'risk_level']);
+            const expectedProfit = getValueByKeys(predictions, ['ganancia_esperada', 'expected_profit', 'profit']);
+            
+            if (betValue) {
+                text += `💰 **Mi recomendación es apostar ${betValue}**\n\n`;
+                text += `Esta cantidad está basada en tu bankroll inicial y tu perfil de riesgo.\n\n`;
+            }
+            
+            if (winChance) {
+                const winNum = extractNumber(winChance);
+                if (winNum > 60) {
+                    text += `🍀 Tus chances de ganar son buenas (${winChance}).\n\n`;
+                } else {
+                    text += `⚠️ Las chances son menores (${winChance}), así que juega responsablemente.\n\n`;
+                }
+            }
+            
+            if (expectedProfit) {
+                text += `📈 Si todo sale bien, podrías ganar alrededor de ${expectedProfit}.\n\n`;
+            }
+            
+            if (risk) {
+                text += `⚡ Nivel de riesgo: ${risk}\n`;
+            }
+            
+            text += `💡 **Recuerda**: Solo apuesta lo que puedas permitirte perder.`;
+            
+            return text;
+        }
+
+        function generateBusinessAnalysisText(predictions) {
+            let text = "";
+            
+            Object.entries(predictions).forEach(([key, value]) => {
+                const readableKey = makeKeyReadable(key);
+                if (key.toLowerCase().includes('profit') || key.toLowerCase().includes('ganancia')) {
+                    text += `💵 ${readableKey}: ${value}\n`;
+                } else if (key.toLowerCase().includes('growth') || key.toLowerCase().includes('crecimiento')) {
+                    text += `📈 ${readableKey}: ${value}\n`;
+                } else if (key.toLowerCase().includes('risk') || key.toLowerCase().includes('riesgo')) {
+                    text += `⚠️ ${readableKey}: ${value}\n`;
+                } else {
+                    text += `📊 ${readableKey}: ${value}\n`;
+                }
+            });
+            
+            return text;
+        }
+
+        function generateGeneralAnalysisText(predictions) {
+            let text = "He procesado los datos que me proporcionaste. Aquí están los resultados:\n\n";
+            
+            Object.entries(predictions).forEach(([key, value]) => {
+                const readableKey = makeKeyReadable(key);
+                text += `• **${readableKey}**: ${value}\n`;
+            });
+            
+            text += `\nEsta información te ayudará a tomar decisiones más informadas.`;
+            
+            return text;
+        }
+
+        function generateInsights(predictions) {
+            // No mostrar las tarjetas de insights
+            return '';
+        }
+
+        function createInsightCard(key, value) {
+            const lowerKey = key.toLowerCase();
+            let icon = '📊';
+            let title = makeKeyReadable(key);
+            let description = 'Resultado del análisis';
+            let showBar = false;
+            let barValue = 0;
+            
+            // Asignar íconos y descripciones específicas
+            if (lowerKey.includes('tiempo') || lowerKey.includes('time')) {
+                icon = '⏰';
+                title = 'Tiempo Estimado';
+                description = 'Duración aproximada del proceso';
+            } else if (lowerKey.includes('apuesta') || lowerKey.includes('bet')) {
+                icon = '💰';
+                title = 'Cantidad Recomendada';
+                description = 'Monto sugerido basado en tu perfil';
+            } else if (lowerKey.includes('probabilidad') || lowerKey.includes('probability')) {
+                icon = '🎯';
+                title = 'Posibilidades de Éxito';
+                description = 'Qué tan probable es que salga bien';
+                showBar = true;
+                barValue = extractNumber(value);
+            } else if (lowerKey.includes('confidence') || lowerKey.includes('confianza')) {
+                icon = '📈';
+                title = 'Nivel de Certeza';
+                description = 'Qué tan seguro estoy de esta predicción';
+                showBar = true;
+                barValue = extractNumber(value);
+            } else if (lowerKey.includes('riesgo') || lowerKey.includes('risk')) {
+                icon = '⚠️';
+                title = 'Evaluación de Riesgo';
+                description = 'Nivel de riesgo involucrado';
+            } else if (lowerKey.includes('ganancia') || lowerKey.includes('profit')) {
+                icon = '💵';
+                title = 'Ganancia Potencial';
+                description = 'Beneficio esperado si todo sale bien';
+            }
+            
+            return `
+                <div class="highlight-card">
+                    <div class="highlight-label">${icon} ${title}</div>
+                    <div class="highlight-value">${value}</div>
+                    <div class="highlight-description">${description}</div>
+                    ${showBar ? `
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${Math.min(barValue || 0, 100)}%"></div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function getValueByKeys(obj, keys) {
+            for (let key of keys) {
+                if (obj[key]) return obj[key];
+            }
+            return null;
+        }
+
+        function extractNumber(value) {
+            if (typeof value === 'number') return value;
+            const match = value.toString().match(/(\d+(?:\.\d+)?)/);
+            return match ? parseFloat(match[1]) : 0;
+        }
+
+        function makeKeyReadable(key) {
+            return key
+                .replace(/_/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ')
+                .trim();
+        }
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Mostrar resultados exitosos
+                    resultContainer.className = 'result-container success';
+                    resultTitle.textContent = '';
+                    
+                    // Mostrar predicciones de forma natural siempre
+                    resultContent.innerHTML = formatPredictionResults(data);
+                } else {
+                    // Mostrar error del servidor
+                    throw new Error(data.message || `Error ${response.status}: ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                // Mostrar error
+                resultContainer.className = 'result-container error';
+                resultTitle.textContent = 'Error en la Predicción:';
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <strong>Error:</strong> ${error.message}<br>
+                        <small>Verifica que el servidor esté funcionando y el endpoint esté disponible.</small>
+                    </div>
+                `;
+                console.error('Error:', error);
+            } finally {
+                // Restaurar estado del botón
+                submitBtn.disabled = false;
+                loadingSpinner.style.display = 'none';
+                btnText.textContent = 'Hacer Predicción';
+                
+                // Mostrar resultados
+                resultContainer.style.display = 'block';
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        // Establecer valores por defecto del ejemplo
+        document.getElementById('avgBet').value = '25.5';
+        document.getElementById('cluster').value = '1';
+        document.getElementById('initialAmount').value = '500';
+        document.getElementById('initialTime').value = '2024-01-15T14:30';
+    </script>
+</body>
+</html>
